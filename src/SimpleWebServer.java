@@ -1,9 +1,9 @@
 /********************************************************************************
-  SimpleWebServer.java
+ SimpleWebServer.java
  This toy web server is used to illustrate security vulnerabilities.
  This web server only supports extremely simple HTTP GET requests.
  This file is also available at http://www.learnsecurity.com/ntk.
-*******************************************************************************/
+ *******************************************************************************/
 
 package com.learnsecurity;
 
@@ -56,11 +56,23 @@ public class SimpleWebServer {
             try to respond with the file
             the user is requesting. */
             serveFile(osw, pathname);
+        } else if (command.equals("POST")) {
+            if (pathname.charAt(0) == '/') {
+                pathname = pathname.substring(1);
+            }
+            logEntry(getTimestamp(), pathname);
+            //consume HTTP header stuff
+            for (int i = 0; i < 5; i++) {
+                br.readLine();
+            }
+
+            storeFile(br, osw, pathname);
         } else {
             /* If the request is a NOT a GET,
             return an error saying this server
             does not implement the requested command. */
             osw.write("HTTP/1.0 501 Not Implemented\n\n");
+            logEntry(getTimestamp(), "Unsupported operation");
         }
         /* Close the connection to the client. */
         osw.close();
@@ -92,8 +104,7 @@ public class SimpleWebServer {
             and read, then return an OK response code and
             send the contents of the file. */
             osw.write("HTTP/1.0 200 OK\n\n");
-            while (c != -1)
-            {
+            while (c != -1) {
                 sb.append((char) c);
                 c = fr.read();
             }
@@ -107,6 +118,32 @@ public class SimpleWebServer {
 
     }
 
+    public void storeFile(BufferedReader br, OutputStreamWriter osw,
+                          String pathname) throws Exception {
+        FileWriter fw = null;
+        try {
+            fw = new FileWriter(pathname);
+            String s = br.readLine();
+            while (s != null) {
+                fw.write(s);
+                s = br.readLine();
+            }
+            fw.close();
+            osw.write("HTTP/1.0 201 Created");
+        } catch (Exception e) {
+            osw.write("HTTP/1.0 500 Internal Server Error");
+        }
+    }
+
+    public void logEntry(String filename, String record) throws Exception {
+        FileWriter fw = new FileWriter(filename+".log", true);
+        fw.write(getTimestamp() + " " + record);
+        fw.close();
+    }
+
+    public String getTimestamp() {
+        return (new Date()).toString();
+    }
 
     /* This method is called when the program is run from
     the command line. */
