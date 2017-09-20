@@ -60,7 +60,9 @@ public class SimpleWebServer {
             if (pathname.charAt(0) == '/') {
                 pathname = pathname.substring(1);
             }
-            logEntry(getTimestamp(), pathname);
+            String filename =getTimestamp().replace(' ','_');
+            System.out.println("Log to " + filename);
+            logEntry(filename, pathname);
             //consume HTTP header stuff
             for (int i = 0; i < 5; i++) {
                 br.readLine();
@@ -136,7 +138,7 @@ public class SimpleWebServer {
     }
 
     public void logEntry(String filename, String record) throws Exception {
-        FileWriter fw = new FileWriter(filename+".log", true);
+        FileWriter fw = new FileWriter(filename + ".log", true);
         fw.write(getTimestamp() + " " + record);
         fw.close();
     }
